@@ -1,0 +1,110 @@
+@import "./variables.module.scss";
+
+.chatWrapper {
+  background-color: $background;
+  color: $text;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease-in-out;
+  overflow: hidden;
+  justify-content: center;
+  align-items: center;
+
+    .inputBox {
+      width: 100%;
+      max-width: 700px;
+      margin: 1rem auto 2rem;
+    }
+}
+
+.messages {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  animation: fadeIn 0.5s ease;
+}
+
+.placeholder {
+  font-size: 1.5rem;
+  text-align: center;
+  color: #aaa;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.userMessage {
+  align-self: flex-end;
+  background: $userBubble;
+  color: $userText;
+  padding: 0.75rem 1rem;
+  border-radius: 1.5rem;
+  max-width: 60%;
+}
+
+.botMessage {
+  align-self: flex-start;
+  background: $botBubble;
+  color: $botText;
+  padding: 0.75rem 1rem;
+  border-radius: 1.5rem;
+  max-width: 60%;
+}
+
+.inputBox {
+  display: flex;
+  background: $inputBackground;
+  border-radius: 2rem;
+  padding: 0.5rem 1rem;
+  gap: 0.5rem;
+  align-items: center;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+
+  input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: $text;
+    font-size: 1rem;
+  }
+
+  button {
+    background: $buttonGradient;
+    border: none;
+    border-radius: 50%;
+    width: 2.5rem;
+    height: 2.5rem;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+}
+
+.messagesWrapper {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: 2rem; // ✅ Add this line
+}
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
