@@ -8,25 +8,32 @@ from app.services.embeddings_service import EmbeddingService
 from app.models.api.rag_pipeline import DocumentEmbedding, DocumentMetadata
 from app.utils.text_chunker import TextChunker
 
-async def _process_batch(self, batch: List[Dict], stats: Dict):
+async def process_batch(batch: List[Dict], stats: Dict, embedding_queue: asyncio.Queue):
         """Process a batch of documents and add to queue"""
         for doc in batch:
             if isinstance(doc, dict):
                 stats['chunks_processed'] += 1
-                await self.embedding_queue.put(doc)
+                await embedding_queue.put(doc)
                 print(f"Chunk {stats['chunks_processed']} queued")
 
-async def _embedding_consumer(self, custom_metadata: Optional[Dict], stats: Dict):
+async def embedding_consumer(
+        custom_metadata: Optional[Dict], 
+        stats: Dict,
+        embedding_queue: asyncio.Queue,
+        stop_event: asyncio.Event,
+        executor: ThreadPoolExecutor,
+        embeddings_handler
+):
     """Consumer that processes embeddings from queue"""
-    while not self.stop_event.is_set() or not self.embedding_queue.empty():
+    while not stop_event.is_set() or not embedding_queue.empty():
         try:
-            doc = await asyncio.wait_for(self.embedding_queue.get(), timeout=1.0)
-            embedding = await generate_embeddings_batch([doc], custom_metadata, self.executor)
+            doc = await asyncio.wait_for(embedding_queue.get(), timeout=1.0)
+            embedding = await generate_embeddings_batch([doc], custom_metadata, executor)
 
             if embedding:
                 stats['embeddings_generated'] += 1
                 print(f"Generated embedding {stats['embeddings_generated']}")
-                storage_result = await self.embeddings_handler.store_embeddings([embedding])
+                storage_result = await embeddings_handler.store_embeddings([embedding])
 
                 if storage_result['stored'] == 1:
                     stats['stored_embeddings'] = stats.get('stored_embeddings', 0) + 1

@@ -36,14 +36,27 @@ class ProjectsService:
             }
 
             consumers = [
-                asyncio.create_task(embedding_consumer(custom_metadata, stats))
+                asyncio.create_task(
+                    embedding_consumer(
+                        custom_metadata, 
+                        stats,
+                        self.embedding_queue,
+                        self.stop_event,
+                        self.executor,
+                        self.embeddings_handler
+                    )
+                )
                 for _ in range(4)
             ]
 
             batch_size = 50
             for i in range(0, total_docs, batch_size):
                 batch = documents[i:i + batch_size]
-                await process_batch(batch, stats)
+                await process_batch(
+                    batch, 
+                    stats, 
+                    self.embedding_queue
+                )
                 
             self.stop_event.set()
             await asyncio.gather(*consumers)
