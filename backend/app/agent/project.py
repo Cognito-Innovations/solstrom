@@ -8,7 +8,7 @@ from app.models.api.agent_router import ProjectResponse
 from app.utils.projects_utils import format_context_texts
 
 class ProjectAgent:
-    """Handles project-related queries using embeddings and vector DB matching"""
+    """Handles project validation and queries using embeddings and vector DB matching"""
     def __init__(self):
         prompt_path = Path(__file__).parent / "prompt" / "project_prompt.json"
         with open(prompt_path) as f:
@@ -17,45 +17,55 @@ class ProjectAgent:
     async def process(self, user_message: str) -> Dict[str, Any]:
         try:
             user_message_embeddings = EmbeddingService.create_embeddings(user_message)
-            
+    
             query_response = await EmbeddingService.get_embeddings(
-                vector=user_message_embeddings
+                vector=user_message_embeddings,
+                limit=self.prompt_config['rag_settings'].get('search_depth', 5),
+                threshold=self.prompt_config['rag_settings'].get('relevance_threshold', 0.75)
             )
-            
-            if query_response and isinstance(query_response[0], dict):
-                context_texts = [
-                    item['metadata']['text']
+            print('\n----query_response---\n', query_response)
+            context_texts = [
+                item['metadata']['text']
+                for item in query_response
+                if 'metadata' in item and 'text' in item['metadata']
+            ] if query_response and isinstance(query_response[0], dict) else format_context_texts(query_response)
+            print('\n------context--text----\n', context_texts)
+            if self.prompt_config['logging'].get('log_project_matches', False):
+                matched_ids = [
+                    item['metadata'].get('project_id', 'unknown')
                     for item in query_response
-                    if 'metadata' in item and 'text' in item['metadata']
+                    if 'metadata' in item
                 ]
-            else:
-                context_texts = format_context_texts(query_response)
-            
-            system_message = self.prompt_config['base_system_message']
+                print(f"Matched projects: {matched_ids}")
+
             formatted_user_message = self.prompt_config['user_message_template'].format(
                 user_message=user_message,
-                context="\n".join(context_texts[:3]) # Limit to top 3 most relevant chunks
+                context="\n".join(context_texts)
             )
-            
-            result = await ClaudeAIClient.generate(
+            print('\n------formatted_user_message----\n', formatted_user_message)
+            if self.prompt_config['logging'].get('log_query_type', False):
+                print("Processing query type: Project validation")
+
+            response: ProjectResponse = await ClaudeAIClient.generate(
                 model_class=ProjectResponse,
                 user_message=formatted_user_message,
-                system_message=system_message,
-                temperature=self.prompt_config['parameters']['temperature'],
-                max_tokens=self.prompt_config['parameters']['max_tokens']
+                system_message=self.prompt_config['base_system_message'],
+                temperature=self.prompt_config['parameters'].get('temperature', 0.7),
+                max_tokens=self.prompt_config['parameters'].get('max_tokens', 1500),
+                top_p=self.prompt_config['parameters'].get('top_p', 0.95)
             )
-            print(f"Result: {result}")
-            
+
+            if self.prompt_config['logging'].get('log_response_length', False):
+                print(f"Response length: {len(str(response))}")
+
             return {
-                "response": result.response,
-                "confidence_score": result.confidence_score,
-                "relevant_projects": result.relevant_projects
+                "response": response.response,
+                "is_greeting": response.is_greeting,
+                "exists_in_data": response.exists_in_data,
+                "exists_elsewhere": response.exists_elsewhere,
+                "relevant_projects": response.relevant_projects
             }
 
         except Exception as e:
-            print(f"Processing error: {str(e)}")
-            return {
-                "response": self.prompt_config['response_structure']['fallback_response'],
-                "confidence_score": 0.0,
-                "relevant_projects": []
-            }
+            print(f"Project validation error: {str(e)}")
+            return self.prompt_config['response_structure']['fallback_response']

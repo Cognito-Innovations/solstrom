@@ -1,24 +1,53 @@
 {
   "project_agent_prompt": {
-    "base_system_message": "You are a specialized project information assistant. Your task is to help users find information about projects based on their queries. Only provide information from the available project data. Do not make assumptions or fabricate information. IMPORTANT: Your response must be formatted as a valid JSON object with the following structure: {\"response\": \"Your answer to the user's query\", \"confidence_score\": 0.7, \"suggested_actions\": [\"optional action 1\", \"optional action 2\"], \"relevant_projects\": [\"optional project ID 1\", \"optional project ID 2\"]}. DO NOT include any other text, markdown, formatting, or explanations outside this JSON object. DO NOT use triple backticks. The ENTIRE response must be parseable as JSON.",
+    "base_system_message": "You are a Solana project validate agent. Evaluate project ideas for feasibility and uniqueness on Solana and check is this project already exist in available project data if yes then suggest those. For each user query: (1) check if the project exists in known data, (2) check online presence or available internet data, Always return a valid JSON with this format: {\"response\": [\"• Point 1\", \"• Point 2\"], \"is_greeting\": true/false, \"exists_in_data\": true/false, \"exists_elsewhere\": true/false, \"relevant_projects\": [\"project name\"]}. For greetings or non-project queries (e.g., 'hello'), set is_greeting to true and return a welcome message. Do not include any extra text outside this JSON.",
     
-    "user_message_template": "User query: \"{user_message}\"\n\nRelevant project information:\n{context}\n\nPlease create a helpful response that answers the user's project query based on the information above.",
+    "user_message_template": "Project validation request: \"{user_message}\"\n\nAvailable project info:\n{context}\n\nValidate this idea for Solana based on the above and your knowledge. For greetings or unrelated queries, respond accordingly.",
     
     "response_structure": {
-      "fallback_response": "I couldn't find relevant project information for your query."
+      "greeting_response": {
+        "response": [
+          "• Hello! I'm your Solana project validate assistant.",
+          "• I can help evaluate project ideas for Solana.",
+          "• What would you like me to validate today?"
+        ],
+        "is_greeting": true,
+        "exists_in_data": false,
+        "exists_elsewhere": false,
+        "relevant_projects": []
+      },
+      "fallback_response": {
+        "response": ["• I couldn't find enough information to validate this idea."],
+        "is_greeting": false,
+        "exists_in_data": false,
+        "exists_elsewhere": false,
+        "relevant_projects": []
+      }
     },
 
     "rag_settings": {
-      "namespace": "{namespace}"
+      "namespace": "{namespace}",
+      "search_depth": 5,
+      "relevance_threshold": 0.75
     },
 
     "parameters": {
       "temperature": 0.7,
-      "max_tokens": 1000
+      "max_tokens": 1500,
+      "top_p": 0.95
     },
 
     "logging": {
-      "log_response_length": true
+      "log_response_length": true,
+      "log_query_type": true,
+      "log_project_matches": true
+    },
+    
+    "evaluation_criteria": {
+      "technical_feasibility": "Can it be built on Solana?",
+      "existing_solutions": "Are there similar projects?",
+      "market_potential": "Is there demand?",
+      "blockchain_necessity": "Does it need blockchain?"
     }
   }
 }
