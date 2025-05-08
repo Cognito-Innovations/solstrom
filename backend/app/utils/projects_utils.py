@@ -2,7 +2,7 @@ import hashlib
 import asyncio
 import functools
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 
 from app.services.embeddings_service import EmbeddingService
 from app.models.api.rag_pipeline import DocumentEmbedding, DocumentMetadata
@@ -140,3 +140,25 @@ def format_context_texts(query_response: List[Dict]) -> List[str]:
            isinstance(item['metadata'], dict) and 
            'text' in item['metadata']
     ]
+
+def extract_source_info(document: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Extracts 'source_name' and 'source_url' from document['metadata']['text']
+    and adds them to document['metadata'] if missing.
+    """
+    text = document.get("metadata", {}).get("text", "")
+    metadata = document.get("metadata", {})
+
+    if "source_name" not in metadata:
+        import re
+        match_name = re.search(r'"?source_name"?\s*:\s*"?([^"]+)"?', text)
+        if match_name:
+            metadata["source_name"] = match_name.group(1)
+
+    if "source_url" not in metadata:
+        match_url = re.search(r'"?source_url"?\s*:\s*"?([^"]+)"?', text)
+        if match_url:
+            metadata["source_url"] = match_url.group(1)
+
+    document["metadata"] = metadata
+    return document

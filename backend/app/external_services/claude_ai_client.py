@@ -66,7 +66,7 @@ class ClaudeAIClient:
                 try:
                     json_content = json.loads(content)
                 except json.JSONDecodeError:
-                    json_content = json.loads(DeepseekAIClient._extract_json(content))
+                    json_content = json.loads(ClaudeAIClient._extract_json(content))
                 
                 return model_class.model_validate(json_content)
                 

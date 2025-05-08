@@ -1,5 +1,15 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
+
+class ProjectSource(BaseModel):
+    source_name: Optional[str] = Field(
+        None,
+        description="Name of the source where the project information came from"
+    )
+    source_url: Optional[str] = Field(
+        None,
+        description="URL of the source where the project information came from"
+    )
 
 class ProjectResponse(BaseModel):
     response: str = Field(..., description="The generated response to the user's query")
@@ -16,4 +26,8 @@ class ProjectResponse(BaseModel):
     relevant_projects: List[str] = Field(
         default_factory=list,
         description="Optional list of relevant project IDs"
+    )
+    sources: List[ProjectSource] = Field(
+        default_factory=list,
+        description="List of sources for the project information"
     )
