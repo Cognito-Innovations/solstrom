@@ -1,9 +1,15 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
-api_url_router = APIRouter(prefix="/api-url", tags=["api_url_router"])
+from app.utils.app_utils import get_app
 
-@api_url_router.get("/get")
-async def get_api_url():
+agent_router = APIRouter(prefix="/agent", tags=["agent_router"])
+
+@agent_router.post("/conversation")
+async def agent_conversation(request: Request):
+    body = await request.json()
+    user_message = body["message"]
+
     app = get_app()
-    api_url = await app.api_url_service.get_api_url()
-    return {"success": True, "api_url": api_url}
+
+    conversation = await app.agent_service.conversation(user_message)
+    return {"success": True, "conversation": conversation}
