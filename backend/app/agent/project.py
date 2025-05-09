@@ -45,7 +45,6 @@ class ProjectAgent:
 
             available_sources = [json.loads(s) for s in available_sources]
             
-            system_message = self.prompt_config['base_system_message']
             formatted_user_message = self.prompt_config['user_message_template'].format(
                 user_message=user_message,
                 context="\n".join(context_texts),
@@ -55,7 +54,7 @@ class ProjectAgent:
             if self.prompt_config['logging'].get('log_query_type', False):
                 print("Processing query type: Project validation")
 
-            response: ProjectResponse = await ClaudeAIClient.generate(
+            result: ProjectResponse = await ClaudeAIClient.generate(
                 model_class=ProjectResponse,
                 user_message=formatted_user_message,
                 system_message=self.prompt_config['base_system_message'],
@@ -74,9 +73,7 @@ class ProjectAgent:
             
             return {
                 "response": result.response,
-                "confidence_score": result.confidence_score,
                 "relevant_projects": result.relevant_projects,
-                "suggested_actions": result.suggested_actions,
                 "sources": valid_sources
             }
 
@@ -84,7 +81,6 @@ class ProjectAgent:
             print(f"Processing error: {str(e)}")
             return {
                 "response": self.prompt_config['response_structure']['fallback_response'],
-                "confidence_score": 0.0,
                 "relevant_projects": [],
                 "sources": [] 
             }

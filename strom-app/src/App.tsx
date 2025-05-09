@@ -36,10 +36,10 @@ const App: React.FC = () => {
           sender: "bot",
           projectData: {
             points: response.response,
-            is_greeting: response.is_greeting,
-            exists_in_data: response.exists_in_data,
-            exists_elsewhere: response.exists_elsewhere,
-            relevant_projects: response.relevant_projects || [],
+            is_greeting: response?.is_greeting,
+            exists_in_data: response?.exists_in_data,
+            exists_elsewhere: response?.exists_elsewhere,
+            relevant_projects: response?.relevant_projects || [],
           }
         };
         setMessages((prev) => [...prev, botMessage]);
