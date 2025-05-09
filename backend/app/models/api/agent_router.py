@@ -12,20 +12,21 @@ class ProjectSource(BaseModel):
     )
 
 class ProjectResponse(BaseModel):
-    response: str = Field(..., description="The generated response to the user's query")
-    confidence_score: float = Field(
-        default=0.7,
-        ge=0.0,
-        le=1.0,
-        description="Confidence score of the response (0.0 to 1.0)"
+    response: List[str] = Field(
+        ..., description="Bullet-point response to the project validation"
     )
-    suggested_actions: List[str] = Field(
-        default_factory=list,
-        description="Optional list of suggested actions"
+    is_greeting: bool = Field(
+        ..., description="Whether the message is a greeting or unrelated to a project"
+    )
+    exists_in_data: bool = Field(
+        ..., description="Does this project exist in the current dataset?"
+    )
+    exists_elsewhere: bool = Field(
+        ..., description="Does this project seem to exist outside of the dataset (e.g., online)?"
     )
     relevant_projects: List[str] = Field(
         default_factory=list,
-        description="Optional list of relevant project IDs"
+        description="IDs of relevant similar projects"
     )
     sources: List[ProjectSource] = Field(
         default_factory=list,

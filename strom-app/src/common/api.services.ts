@@ -1,3 +1,4 @@
+// common/api.services.ts
 const API_URL = process.env.REACT_APP_API_URL;
 
 export const sendMessage = async (message: string) => {
@@ -15,7 +16,7 @@ export const sendMessage = async (message: string) => {
     }
 
     const data = await response.json();
-    return data.conversation.response;
+    return data.conversation;  // Return the full response structure
   } catch (error) {
     console.error("Error:", error);
     throw error;

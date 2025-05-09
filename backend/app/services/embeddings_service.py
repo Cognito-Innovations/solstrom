@@ -1,6 +1,6 @@
 import numpy as np
 from FlagEmbedding import FlagModel
-from typing import List
+from typing import List, Optional
 
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
 from app.utils.vector_utils import pad_vector
@@ -25,13 +25,23 @@ class EmbeddingService:
 
     @staticmethod
     async def get_embeddings(
-        vector: List[float], 
-        top_k: int = 10, 
+        vector: List[float],
+        limit: int = 10,
+        threshold: Optional[float] = None,
         includes_values: bool = False
-        ):
+    ):
         embeddings_handler = EmbeddingsHandler()
-        return await embeddings_handler.query_embeddings(
+        raw_results = await embeddings_handler.query_embeddings(
             vector=vector,
-            top_k=top_k,
+            top_k=limit,
             includes_values=includes_values
         )
+
+        # If a threshold is defined, filter based on similarity score
+        if threshold is not None:
+            raw_results = [
+                result for result in raw_results
+                if result.get("score", 0.0) >= threshold
+            ]
+
+        return raw_results

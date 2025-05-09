@@ -8,7 +8,7 @@ from app.models.api.agent_router import ProjectResponse
 from app.utils.projects_utils import format_context_texts, extract_source_info
 
 class ProjectAgent:
-    """Handles project-related queries using embeddings and vector DB matching"""
+    """Handles project validation and queries using embeddings and vector DB matching"""
     def __init__(self):
         prompt_path = Path(__file__).parent / "prompt" / "project_prompt.json"
         with open(prompt_path) as f:
@@ -17,9 +17,11 @@ class ProjectAgent:
     async def process(self, user_message: str) -> Dict[str, Any]:
         try:
             user_message_embeddings = EmbeddingService.create_embeddings(user_message)
-            
+    
             query_response = await EmbeddingService.get_embeddings(
-                vector=user_message_embeddings
+                vector=user_message_embeddings,
+                limit=self.prompt_config['rag_settings'].get('search_depth', 5),
+                threshold=self.prompt_config['rag_settings'].get('relevance_threshold', 0.75)
             )
             
             available_sources = set()
@@ -49,13 +51,17 @@ class ProjectAgent:
                 context="\n".join(context_texts),
                 available_sources=json.dumps(available_sources)
             )
-            
-            result = await ClaudeAIClient.generate(
+            print('\n------formatted_user_message----\n', formatted_user_message)
+            if self.prompt_config['logging'].get('log_query_type', False):
+                print("Processing query type: Project validation")
+
+            response: ProjectResponse = await ClaudeAIClient.generate(
                 model_class=ProjectResponse,
                 user_message=formatted_user_message,
-                system_message=system_message,
-                temperature=self.prompt_config['parameters']['temperature'],
-                max_tokens=self.prompt_config['parameters']['max_tokens']
+                system_message=self.prompt_config['base_system_message'],
+                temperature=self.prompt_config['parameters'].get('temperature', 0.7),
+                max_tokens=self.prompt_config['parameters'].get('max_tokens', 1500),
+                top_p=self.prompt_config['parameters'].get('top_p', 0.95)
             )
 
             valid_sources = []

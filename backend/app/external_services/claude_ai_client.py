@@ -18,6 +18,7 @@ class ClaudeAIClient:
         user_message: str,
         system_message: Optional[str] = None,
         temperature: float = 0.3,
+        top_p: float = 1.0,
         max_tokens: int = 1000
     ) -> T:
         try:
@@ -41,7 +42,8 @@ class ClaudeAIClient:
                 "system": system_message,
                 "messages": [{"role": "user", "content": enhanced_message}],
                 "temperature": temperature,
-                "max_tokens": max_tokens
+                "max_tokens": max_tokens,
+                "top_p": top_p
             }
         
             print(f"API payload: {json.dumps(payload, indent=2)[:500]}...")
