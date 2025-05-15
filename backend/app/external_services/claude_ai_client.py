@@ -22,8 +22,6 @@ class ClaudeAIClient:
         max_tokens: int = 1000
     ) -> T:
         try:
-            print(f"Preparing Claude API request...")
-
             headers = {
                 "x-api-key": CLAUDE_API_KEY,
                 "anthropic-version": "2023-06-01",
@@ -46,8 +44,6 @@ class ClaudeAIClient:
                 "top_p": top_p
             }
         
-            print(f"API payload: {json.dumps(payload, indent=2)[:500]}...")
-        
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     CLAUDE_API_URL,
@@ -56,12 +52,8 @@ class ClaudeAIClient:
                     timeout=30.0
                 )
 
-                print(f"API response status: {response.status_code}")
-
                 response.raise_for_status()
                 json_response = response.json()
-
-                print(f"API response: {json.dumps(json_response, indent=2)[:500]}...")
                 
                 content = json_response.get("content", [{}])[0].get("text", "")
                 
@@ -69,6 +61,14 @@ class ClaudeAIClient:
                     json_content = json.loads(content)
                 except json.JSONDecodeError:
                     json_content = json.loads(ClaudeAIClient._extract_json(content))
+
+                if not isinstance(json_content.get('response'), list):
+                    json_content['response'] = ["• Invalid response format received"]
+                json_content.setdefault('is_greeting', False)
+                json_content.setdefault('exists_in_data', False)
+                json_content.setdefault('exists_elsewhere', False)
+                json_content.setdefault('relevant_projects', [])
+                json_content.setdefault('sources', [])
                 
                 return model_class.model_validate(json_content)
                 
@@ -77,7 +77,14 @@ class ClaudeAIClient:
             raise ValueError(f"API request failed: {str(e)}")
         except Exception as e:
             print(f"Unexpected error: {str(e)}")
-            raise
+            return model_class(
+                response=["• Error processing your request"],
+                is_greeting=False,
+                exists_in_data=False,
+                exists_elsewhere=False,
+                relevant_projects=[],
+                sources=[]
+            )
 
     @staticmethod
     def _extract_json(text: str) -> str:

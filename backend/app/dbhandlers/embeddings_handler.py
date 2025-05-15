@@ -116,9 +116,6 @@ class EmbeddingsHandler:
             if not vector:
                 print("Error: Empty query vector")
                 return []
-                
-            if len(vector) != 1024:
-                print(f"Warning: Vector size mismatch. Expected 1024, got {len(vector)}")
             
             query_params = {
                 "collection_name": QDRANT_COLLECTION_NAME,
@@ -133,8 +130,14 @@ class EmbeddingsHandler:
                 
             if score_threshold is not None:
                 query_params["score_threshold"] = score_threshold
-            
-            search_results = self.client.search(**query_params)
+
+            if hasattr(self.client, 'search_async'):
+                search_results = await self.client.search_async(**query_params)
+            else:
+                search_results = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: self.client.search(**query_params)
+                )
 
             return [
                 {

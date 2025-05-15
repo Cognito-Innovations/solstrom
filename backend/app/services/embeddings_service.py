@@ -1,5 +1,6 @@
 import numpy as np
 from FlagEmbedding import FlagModel
+from qdrant_client.http import models 
 from typing import List, Optional
 
 from app.dbhandlers.embeddings_handler import EmbeddingsHandler
@@ -28,16 +29,17 @@ class EmbeddingService:
         vector: List[float],
         limit: int = 10,
         threshold: Optional[float] = None,
-        includes_values: bool = False
+        includes_values: bool = False,
+        filter_condition: Optional[models.Filter] = None
     ):
         embeddings_handler = EmbeddingsHandler()
         raw_results = await embeddings_handler.query_embeddings(
             vector=vector,
             top_k=limit,
-            includes_values=includes_values
+            includes_values=includes_values,
+            filter_condition=filter_condition
         )
-
-        # If a threshold is defined, filter based on similarity score
+        
         if threshold is not None:
             raw_results = [
                 result for result in raw_results
