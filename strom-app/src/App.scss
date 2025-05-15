@@ -67,13 +67,20 @@
   align-items: center;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
 
-  input {
+  .textarea-input {
     flex: 1;
     background: transparent;
     border: none;
     outline: none;
     color: $text;
     font-size: 1rem;
+    resize: none;
+    overflow: hidden;
+    min-height: 44px;
+    max-height: 200px;
+    font-family: inherit;
+    padding: 0;
+    margin: 0;
   }
 
   button {
@@ -90,14 +97,22 @@
 }
 
 .messagesWrapper {
-  overflow: scroll;
-  width: 100%;
-  max-width: 700px;
-  margin: 0 auto;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  padding-top: 2rem; // ✅ Add this line
+    overflow-y: scroll;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding-top: 2rem;
+
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
+}
+
+.messagesWrapper::-webkit-scrollbar {
+    display: none; 
 }
 
 
@@ -109,5 +124,52 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.projectResponse {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.responsePoint {
+  margin-bottom: 0.5rem;
+}
+
+.metaInfo {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section {
+  margin-top: 0.75rem;
+  
+  h4 {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #aaa;
+  }
+  
+  ul {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+  
+  li {
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+  }
+}
+
+.sourcesList {
+  a {
+    color: #4dabf7;
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }

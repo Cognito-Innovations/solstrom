@@ -1,4 +1,5 @@
 import hashlib
+import re
 import asyncio
 import functools
 from concurrent.futures import ThreadPoolExecutor
@@ -103,15 +104,15 @@ def create_document_embedding(
     try:
         text_to_hash = document['text'] + document['source'] + str(document['chunk_number'])
         content_hash = hashlib.sha256(text_to_hash.encode()).hexdigest()
-        int_id = int(content_hash[:15], 16)  # Convert first 15 chars to integer
+        int_id = int(content_hash[:15], 16) 
 
-        embedding_text = document['text'][:4000]  # Truncate upfront
+        embedding_text = document['text'][:4000]  
         embedding_values = EmbeddingService.create_embeddings(embedding_text)
         
         metadata = DocumentMetadata(
             source=document['source'],
             content_type=document['content_type'],
-            text=document['text'][:1500],  # Store truncated text
+            text=document['text'][:1500],  
             document_id=f"doc_{int_id}",
             text_length=len(document['text']),
             truncated=len(document['text']) > 4000,
@@ -140,25 +141,35 @@ def format_context_texts(query_response: List[Dict]) -> List[str]:
            isinstance(item['metadata'], dict) and 
            'text' in item['metadata']
     ]
-
+    
 def extract_source_info(document: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Extracts 'source_name' and 'source_url' from document['metadata']['text']
-    and adds them to document['metadata'] if missing.
-    """
-    text = document.get("metadata", {}).get("text", "")
     metadata = document.get("metadata", {})
+    text = metadata.get("text", "")
 
     if "source_name" not in metadata:
-        import re
-        match_name = re.search(r'"?source_name"?\s*:\s*"?([^"]+)"?', text)
-        if match_name:
-            metadata["source_name"] = match_name.group(1)
+        match = re.search(r'"source_name"\s*:\s*"([^"]+)"', text)
+        if match:
+            metadata["source_name"] = match.group(1).strip()
 
     if "source_url" not in metadata:
-        match_url = re.search(r'"?source_url"?\s*:\s*"?([^"]+)"?', text)
-        if match_url:
-            metadata["source_url"] = match_url.group(1)
+        match = re.search(r'"source_url"\s*:\s*"([^"]+)"', text)
+        if match:
+            metadata["source_url"] = match.group(1).strip()
+        elif (url_match := re.search(r'(https?://[^\s]+)', text)):
+            metadata["source_url"] = url_match.group(1).strip()
+        elif "source_name" in metadata:
+            normalized = (
+                unicodedata.normalize("NFKD", metadata["source_name"])
+                .encode("ascii", "ignore")
+                .decode("utf-8")
+            )
+            slug = (
+                re.sub(r"[^\w\s-]", "", normalized)
+                .strip()
+                .lower()
+                .replace(" ", "-")
+            )
+            metadata["source_url"] = f"https://{slug}.com"
 
     document["metadata"] = metadata
     return document

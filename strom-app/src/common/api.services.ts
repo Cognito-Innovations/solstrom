@@ -16,7 +16,7 @@ export const sendMessage = async (message: string) => {
     }
 
     const data = await response.json();
-    return data.conversation;  // Return the full response structure
+    return data;  // Return the full response structure
   } catch (error) {
     console.error("Error:", error);
     throw error;

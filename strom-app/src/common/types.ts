@@ -5,10 +5,16 @@ export interface Message {
   projectData?: ProjectAgentResponse;
 }
 
+export interface Source {
+  source_name?: string;
+  source_url?: string;
+}
+
 export interface ProjectAgentResponse {
   points: string[];
   is_greeting: boolean;
   exists_in_data: boolean;
   exists_elsewhere: boolean;
   relevant_projects?: string[];
+  sources?: (string | Source)[];
 }
