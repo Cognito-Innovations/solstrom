@@ -27,48 +27,48 @@ const App: React.FC = () => {
   }, [input]);
 
   const handleSend = async () => {
-  if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading) return;
 
-  const newMessage: Message = { text: input.trim(), sender: "user" };
-  setMessages((prev) => [...prev, newMessage]);
-  setInput("");
-  setIsLoading(true);
+    const newMessage: Message = { text: input.trim(), sender: "user" };
+    setMessages((prev) => [...prev, newMessage]);
+    setInput("");
+    setIsLoading(true);
 
-  try {
-    const apiResponse = await sendMessage(input.trim());
+    try {
+      const apiResponse = await sendMessage(input.trim());
 
-    if (apiResponse?.conversation) {
-      const { response, relevant_projects, sources } = apiResponse.conversation;
-      
-      const botMessage: Message = {
-        text: "",
-        sender: "bot",
-        projectData: {
-          points: Array.isArray(response) ? response : ["• No valid response format received"],
-          is_greeting: false,
-          exists_in_data: false,
-          exists_elsewhere: false,
-          relevant_projects: relevant_projects || [],
-          sources: sources || [],
-        }
-      };
-      setMessages((prev) => [...prev, botMessage]);
-    } else {
+      if (apiResponse?.conversation) {
+        const { response, relevant_projects, sources } = apiResponse.conversation;
+
+        const botMessage: Message = {
+          text: "",
+          sender: "bot",
+          projectData: {
+            points: Array.isArray(response) ? response : ["• No valid response format received"],
+            is_greeting: false,
+            exists_in_data: false,
+            exists_elsewhere: false,
+            relevant_projects: relevant_projects || [],
+            sources: sources || [],
+          }
+        };
+        setMessages((prev) => [...prev, botMessage]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { text: "No response received", sender: "bot" },
+        ]);
+      }
+    } catch (error) {
+      console.error("Error:", error);
       setMessages((prev) => [
         ...prev,
-        { text: "No response received", sender: "bot" },
+        { text: "Sorry, something went wrong. Please try again.", sender: "bot" },
       ]);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error("Error:", error);
-    setMessages((prev) => [
-      ...prev,
-      { text: "Sorry, something went wrong. Please try again.", sender: "bot" },
-    ]);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -79,31 +79,32 @@ const App: React.FC = () => {
   };
 
   const renderProjectResponse = (data: ProjectAgentResponse) => {
-  if (data.is_greeting) {
+    if (data.is_greeting) {
+      return (
+        <div className="greetingResponse">
+          {data.points.map((point, i) => (
+            <div key={i} className="welcomePoint">{point}</div>
+          ))}
+        </div>
+      );
+    }
+
     return (
-      <div className="greetingResponse">
+      <div className="projectResponse">
         {data.points.map((point, i) => (
-          <div key={i} className="welcomePoint">{point}</div>
+          <div key={i} className="responsePoint">{point}</div>
         ))}
-      </div>
-    );
-  }
 
-  return (
-    <div className="projectResponse">
-      {data.points.map((point, i) => (
-        <div key={i} className="responsePoint">{point}</div>
-      ))}
-
-      <div className="metaInfo">
-        {data.relevant_projects && data.relevant_projects?.length > 0 && (
-          <div className="section">
-            <h4>Related Projects:</h4>
-            <ul>
-              {data.relevant_projects.map((project, i) => (
-                <li key={i}>{project}</li>
-              ))}
-            </ul>
+        {data.relevant_projects && data.relevant_projects.length > 0 && (
+          <div className="metaInfo">
+            <div className="section">
+              <h4>Related Projects:</h4>
+              <ul>
+                {data.relevant_projects.map((project, i) => (
+                  <li key={i}>{project}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
 
@@ -114,7 +115,7 @@ const App: React.FC = () => {
               {data.sources.map((source, i) => {
                 const sourceName = typeof source === 'object' ? source.source_name : source;
                 const sourceUrl = typeof source === 'object' ? source.source_url : '';
-                
+
                 return (
                   <li key={i}>
                     {sourceUrl ? (
@@ -131,48 +132,47 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
   );
 };
 
-  return (
-    <div className={'chatWrapper'}>
-      <div className="messagesWrapper">
-        {messages.length === 0 && (
-          <div className="placeholder">What Solana project can I validate for you?</div>
-        )}
+return (
+  <div className={'chatWrapper'}>
+    <div className="messagesWrapper">
+      {messages.length === 0 && (
+        <div className="placeholder">Solana brainstrom and validate project ideas for you</div>
+      )}
 
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={msg.sender === "user" ? "userMessage" : "botMessage"}
-          >
-            {msg.projectData
-              ? renderProjectResponse(msg.projectData)
-              : msg.text}
-          </div>
-        ))}
-        {isLoading && (
-          <div className="botMessage">
-            <TypingLoader />
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-      <div className="inputBox">
-        <textarea
-          ref={textareaRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Enter a Solana project to validate"
-          rows={1}
-          className="textarea-input"        
-        />
-        <button onClick={handleSend} disabled={isLoading}>↩</button>
-      </div>
+      {messages.map((msg, idx) => (
+        <div
+          key={idx}
+          className={msg.sender === "user" ? "userMessage" : "botMessage"}
+        >
+          {msg.projectData
+            ? renderProjectResponse(msg.projectData)
+            : msg.text}
+        </div>
+      ))}
+      {isLoading && (
+        <div className="botMessage">
+          <TypingLoader />
+        </div>
+      )}
+      <div ref={messagesEndRef} />
     </div>
-  );
+    <div className="inputBox">
+      <textarea
+        ref={textareaRef}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Describe about your project to brainstrom or validate"
+        rows={1}
+        className="textarea-input"
+      />
+      <button onClick={handleSend} disabled={isLoading}>↩</button>
+    </div>
+  </div>
+);
 };
 
 export default App;

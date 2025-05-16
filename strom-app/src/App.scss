@@ -79,10 +79,10 @@
     min-height: 44px;
     max-height: 200px;
     font-family: inherit;
-    padding: 0;
-    margin: 0;
+    padding: 10px 0; // add top and bottom padding to center cursor
+    box-sizing: border-box;
+    line-height: 1.2rem; // fine-tune for visual centering
   }
-
   button {
     background: $buttonGradient;
     border: none;
