@@ -44,8 +44,7 @@ class ProjectAgent:
                 doc_chunks = await EmbeddingService.get_embeddings(
                     vector=user_message_embeddings,
                     limit=20, 
-                    threshold=0.5,
-                    with_highlight=True,  
+                    threshold=0.5, 
                     filter_condition=models.Filter(
                         must=[
                             models.FieldCondition(
