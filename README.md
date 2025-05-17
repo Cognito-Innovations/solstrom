@@ -114,3 +114,7 @@ API will be available at [http://localhost:8001](http://localhost:8001)
     - Qdrant vector search service used for semantic indexing.
     
     - Environment-variable-based config for secure and flexible deployments.
+
+
+## Hosted URL
+[https://solstrom.web.app](https://solstrom.web.app)
