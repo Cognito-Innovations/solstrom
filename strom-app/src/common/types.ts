@@ -16,5 +16,5 @@ export interface ProjectAgentResponse {
   exists_in_data: boolean;
   exists_elsewhere: boolean;
   relevant_projects?: string[];
-  sources?: (string | Source)[];
+  sources?: any[];
 }

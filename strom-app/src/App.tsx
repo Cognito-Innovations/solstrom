@@ -4,6 +4,13 @@ import { TypingLoader } from "./components/TypingLoader/TypingLoader";
 import { Message, ProjectAgentResponse } from "./common/types";
 import "./App.scss";
 
+const EXAMPLE_QUERIES = [
+  "Anyone built loyalty program ?",
+  "Brainstorm a Solana NFT project idea",
+  "What projects won in previous Solana hackathons?",
+  "Suggest some project ideas to get started building in solana hackathon",
+];
+
 const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -25,6 +32,20 @@ const App: React.FC = () => {
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [input]);
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      const timeout = setTimeout(() => {
+        const welcomeMessage: Message = {
+          text: "👋 Welcome, How can I help your sol projects",
+          sender: "bot"
+        };
+        setMessages([welcomeMessage]);
+      }, 600); // delay in ms
+  
+      return () => clearTimeout(timeout); // cleanup on unmount
+    }
+  }, []);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -49,7 +70,7 @@ const App: React.FC = () => {
             exists_in_data: false,
             exists_elsewhere: false,
             relevant_projects: relevant_projects || [],
-            sources: sources || [],
+            sources: sources || [{ source_name: '', source_url: '' }],
           }
         };
         setMessages((prev) => [...prev, botMessage]);
@@ -69,7 +90,6 @@ const App: React.FC = () => {
       setIsLoading(false);
     }
   };
-
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -107,8 +127,7 @@ const App: React.FC = () => {
             </div>
           </div>
         )}
-
-        {data.sources && data.sources.length > 0 && (
+        {data.sources && data.sources.length > 0 && (data.sources[0]?.source_name as any) && (
           <div className="section">
             <h4>Sources:</h4>
             <ul className="sourcesList">
@@ -132,47 +151,82 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
+    );
+  };
+
+  return (
+    <div className={'chatWrapper'}>
+      <div className="messagesWrapper">
+        {messages.length === 1 && messages[0].projectData?.is_greeting && (
+          <div className="placeholder">
+            <div>Try one of these examples:</div>
+            <ul>
+              {EXAMPLE_QUERIES.map((example, idx) => (
+                <li
+                  key={idx}
+                  onClick={() => setInput(example)}
+                  style={{
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    marginTop: "0.5rem"
+                  }}
+                >
+                  {example}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+      {messages.length === 1 && messages[0].text.includes("Welcome, How can I help your sol projects") && (
+        <div className="placeholder">
+          <div>Try one of these examples:</div>
+          <ul>
+            {EXAMPLE_QUERIES.map((example, idx) => (
+              <li
+                key={idx}
+                onClick={() => setInput(example)}
+              >
+                {example}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+        {messages.map((msg, idx) => (
+          <div
+            key={idx}
+            className={msg.sender === "user" ? "userMessage" : "botMessage"}
+          >
+            {msg.projectData
+              ? renderProjectResponse(msg.projectData)
+              : msg.text}
+          </div>
+        ))}
+
+        {isLoading && (
+          <div className="botMessage">
+            <TypingLoader />
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="inputBox">
+        <textarea
+          ref={textareaRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Describe more about your project to brainstorm or validate etc"
+          rows={1}
+          className="textarea-input"
+        />
+        <button onClick={handleSend} disabled={isLoading}>↩</button>
+      </div>
+    </div>
   );
-};
-
-return (
-  <div className={'chatWrapper'}>
-    <div className="messagesWrapper">
-      {messages.length === 0 && (
-        <div className="placeholder">Solana brainstrom and validate project ideas for you</div>
-      )}
-
-      {messages.map((msg, idx) => (
-        <div
-          key={idx}
-          className={msg.sender === "user" ? "userMessage" : "botMessage"}
-        >
-          {msg.projectData
-            ? renderProjectResponse(msg.projectData)
-            : msg.text}
-        </div>
-      ))}
-      {isLoading && (
-        <div className="botMessage">
-          <TypingLoader />
-        </div>
-      )}
-      <div ref={messagesEndRef} />
-    </div>
-    <div className="inputBox">
-      <textarea
-        ref={textareaRef}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Describe about your project to brainstrom or validate"
-        rows={1}
-        className="textarea-input"
-      />
-      <button onClick={handleSend} disabled={isLoading}>↩</button>
-    </div>
-  </div>
-);
 };
 
 export default App;
