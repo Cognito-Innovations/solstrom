@@ -9,5 +9,5 @@ class AgentService:
         """Store checkout product data via handler."""
         response = await self.agent.process(user_message)
         db = DB()
-        await db.create_message({**response, 'user_message': user_message})
+        await db.track_message({**response, 'user_message': user_message})
         return response

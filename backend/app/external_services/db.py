@@ -9,7 +9,7 @@ HEADERS =  {
 
 class DB:
     
-    async def create_message(self, response):
+    async def track_message(self, response):
         json_str = json.dumps(response, default=str)
         timestamp = datetime.now(UTC).strftime("%d-%b-%Y-%H-%M-%S")
         url = f"{FIREBASE_DB_API}/solstrom/{timestamp}.json"
