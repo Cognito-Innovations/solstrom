@@ -9,3 +9,5 @@ QDRANT_API_URL = os.getenv("QDRANT_API_URL")
 
 #CLUADE
 CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
+
+FIREBASE_DB_API = os.getenv("FIREBASE_DB_API")
