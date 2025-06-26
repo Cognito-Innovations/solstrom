@@ -18,3 +18,10 @@ export interface ProjectAgentResponse {
   relevant_projects?: string[];
   sources?: any[];
 }
+
+export interface PopupProps {
+  open: boolean;
+  message: string;
+  onClose: () => void;
+  actions?: React.ReactNode;
+}
