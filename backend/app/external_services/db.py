@@ -5,17 +5,16 @@ from datetime import datetime, UTC
 
 from app.models.db.user import User
 from app.models.db.message import Message
-from app.config import FIREBASE_DB_API, MONGO_URI
+from app.config import FIREBASE_DB_API
 
 class DB:
-    def __init__(self):
-        self.mongo_uri = MONGO_URI
+    def __init__(self,  client: MongoClient):
         try:
-            self.client = MongoClient(self.mongo_uri)
+            self.client = client
             self.db = self.client.get_default_database()
             self.users_collection = self.db["users"]
             self.messages_collection = self.db["messages"]
-            print("Successfully connected to MongoDB.")
+            print("Successfully connected to MongoDB and selected database.")
         except Exception as e:
             print(f"Error connecting to MongoDB: {e}")
             self.client = None
@@ -76,4 +75,6 @@ class DB:
     def count_user_messages(self, user_id: str):
         if self.messages_collection is None:
             return 0
-        return self.messages_collection.count_documents({"user_id": user_id})
+        count = self.messages_collection.count_documents({"user_id": user_id})
+        print(f"DEBUG: Counting messages for user_id '{user_id}'. Found: {count} messages.")
+        return count

@@ -1,15 +1,16 @@
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Depends
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
 from app.utils.app_utils import get_app
 from app.external_services.db import DB
 from app.config import GOOGLE_CLIENT_ID
+from app.utils.dependencies import get_db 
 
 agent_router = APIRouter(prefix="/agent", tags=["agent_router"])
 
 @agent_router.post("/auth/google")
-async def auth_google(request: Request):
+async def auth_google(request: Request, db: DB = Depends(get_db)):
     """Handles Google login by verifying the token, and creating/retrieving the user."""
     if not GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=500, detail="Google Client ID is not configured on the server.")
@@ -29,7 +30,6 @@ async def auth_google(request: Request):
         if not all([user_id, email, name]):
              raise HTTPException(status_code=400, detail="Invalid token payload.")
 
-        db = DB()
         user = db.get_user(user_id)
         
         if user is None:
@@ -56,16 +56,15 @@ async def auth_google(request: Request):
 
 
 @agent_router.post("/conversation")
-async def agent_conversation(request: Request):
+async def agent_conversation(request: Request, db: DB = Depends(get_db)):
     body = await request.json()
     user_message = body["message"]
     user_info = body.get("user")
 
     app = get_app()
-    db = DB()
 
     if not user_info:
-        conversation = await app.agent_service.conversation(user_message)
+        conversation = await app.agent_service.conversation(user_message, db=db)
         return {"success": True, "conversation": conversation, "limitReached": False, "free": True}
 
     user_id = user_info.get("id")
@@ -76,40 +75,38 @@ async def agent_conversation(request: Request):
         name = user_info.get("name")
         user = db.create_user(user_id, email, name)
 
-    msg_count = db.count_user_messages(user_id)
     free = user.get("free", True)
     paid = user.get("paid", False)
-    limitReached = False
-    if free and not paid and msg_count >= 5:
-        limitReached = True
 
-    if limitReached:
+    msg_count = db.count_user_messages(user_id)
+
+    if free and not paid and msg_count >= 5:
         return {
             "success": True,
             "conversation": {"response": ["You have reached your free message limit."]},
-            "limitReached": limitReached,
+            "limitReached": True,
             "free": free,
             "paid": paid
         }
 
-    conversation = await app.agent_service.conversation(user_message)
-    db.store_message(user_id, user_message, str(conversation)) # Ensure conversation is stored as a string
+    conversation = await app.agent_service.conversation(user_message, db=db)
+    db.store_message(user_id, user_message, str(conversation))
+
+    limit_reached_after_send = free and not paid and (msg_count + 1) >= 5
 
     return {
         "success": True,
         "conversation": conversation,
-        "limitReached": limitReached,
+        "limitReached": limit_reached_after_send,
         "free": free,
         "paid": paid
     }
 
-
 @agent_router.post("/user/pay")
-async def user_pay(request: Request):
+async def user_pay(request: Request, db: DB = Depends(get_db)):
     body = await request.json()
     user_id = body.get("userId")
     if not user_id:
         return {"success": False, "error": "Missing userId"}
-    db = DB()
     db.set_user_paid(user_id)
     return {"success": True}
