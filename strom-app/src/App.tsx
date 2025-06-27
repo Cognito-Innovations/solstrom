@@ -384,7 +384,7 @@ const App: React.FC = () => {
         </div>
 
         <Popup
-            open={true}
+            open={showLimitPopup}
             heading="Worth fee"
             message="We are checking is it worth to pay ?"
             showSolanaPay={true}

@@ -12,6 +12,8 @@
   justify-content: center;
   z-index: 1000;
   backdrop-filter: blur(4px);
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .popup-box {
@@ -94,5 +96,21 @@
     &:hover {
       opacity: 0.9;
     }
+  }
+}
+
+@media (max-width: 480px) {
+  .popup-message {
+    font-size: 1rem;
+    
+    input[type="number"] {
+      width: 100px;
+      margin-right: 0.3rem;
+    }
+  }
+  
+  .popup-actions button {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
   }
 }
