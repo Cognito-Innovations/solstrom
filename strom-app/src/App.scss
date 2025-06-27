@@ -20,6 +20,19 @@
   }
 }
 
+.wallet-container {
+  position: absolute;
+  top: 3rem;
+  right: 1rem;
+}
+
+.wallet-button {
+  background-color: black !important;
+  color: white !important;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+} 
+
 .messagesWrapper {
   overflow-y: auto;
   overflow-x: hidden;
