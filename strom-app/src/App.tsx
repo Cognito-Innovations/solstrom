@@ -6,9 +6,16 @@ import { sendMessage as sendMessageApi, loginWithGoogle, handlePayment } from ".
 import { EXAMPLE_QUERIES } from "./common/queries.constants";
 import { ANON_MESSAGE_COUNT_KEY, USER_TOKEN_KEY } from "./common/constants";
 import { Message, ProjectAgentResponse } from "./common/types";
+import { SolanaProvider } from "./common/SolanaProvider";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import "./App.scss";
 
 const App: React.FC = () => {
+  const { connection } = useConnection();
+  const [solAmount, setSolAmount] = useState(0.5);
+  const [isPaying, setIsPaying] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -121,12 +128,13 @@ const App: React.FC = () => {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    if (!user && messageCount >= 1) {
-      setShowLoginPopup(true);
-      return;
-    }
+    //TODO: Uncomment this for now
+    // if (!user && messageCount >= 1) {
+    //   setShowLoginPopup(true);
+    //   return;
+    // }
 
-    if (user && isFree && !isPaid && messageCount >= 5) {
+    if (messageCount >= 5) {
         setShowLimitPopup(true);
         return;
     }
@@ -201,16 +209,53 @@ const App: React.FC = () => {
     }
   };
 
+
+  const { publicKey, sendTransaction } = useWallet();
+
+
+  const handleAmount = (amount: string|number) => {
+    setSolAmount(Number(amount))
+  }
+
   const handlePay = async () => {
-    if (user) {
-      try {
-        await handlePayment(user.id);
-        setIsPaid(true);
-        setIsFree(false);
-        setShowLimitPopup(false);
-      } catch (error) {
-        console.error("Payment failed:", error);
-      }
+
+  
+    if (solAmount < 0.5 || solAmount > 20) {
+      alert("Amount must be between 0.5 and 20 SOL");
+      return;
+    }
+
+    if(!publicKey){
+      alert("Wallet is not connected properly, please reconnect it again");
+      return;
+    }
+  
+    try {
+      setIsPaying(true);
+
+      const LAMPORTS_PER_SOL = 1000000000
+      const recipientPubKey =  new PublicKey('DTrXdM5a3X4dcSZRGF18Q1f1kLa8eoYThiFeV4uu5nwQ')
+      const transaction = new Transaction();
+      const sendSolInstruction = SystemProgram.transfer({
+        fromPubkey: publicKey,
+        toPubkey: recipientPubKey,
+        lamports: 1.1 * LAMPORTS_PER_SOL,
+      });
+
+      transaction.add(sendSolInstruction);
+
+      const signature = await sendTransaction(transaction, connection);
+      console.log(`Transaction signature: ${signature}`);
+    
+      alert("Payment successful!");
+      setIsPaid(true);
+      setIsFree(false);
+      setShowLimitPopup(false);
+    } catch (error) {
+      console.error("Payment failed:", error);
+      alert("Transaction failed. Try again.");
+    } finally {
+      setIsPaying(false);
     }
   };
 
@@ -318,6 +363,12 @@ const App: React.FC = () => {
             <div ref={messagesEndRef} />
         </div>
 
+        <div className="wallet-container">
+          <div className="wallet-button-container">
+            <WalletMultiButton className="wallet-button" />
+          </div>
+        </div>
+
         <div className="inputBox">
             <textarea
                 ref={textareaRef}
@@ -333,23 +384,12 @@ const App: React.FC = () => {
         </div>
 
         <Popup
-            open={showLoginPopup}
-            message="Please login with Google to continue."
-            onClose={() => setShowLoginPopup(false)}
-            actions={
-                <GoogleLogin
-                    onSuccess={handleGoogleLoginSuccess}
-                    onError={handleGoogleLoginError}
-                    width="100%"
-                    containerProps={{ className: "google-login-button" }}
-                />
-            }
-        />
-
-        <Popup
-            open={showLimitPopup}
-            message="Your free messages are reached. You need to pay to chat further."
+            open={true}
+            heading="Worth fee"
+            message="We are checking is it worth to pay ?"
+            showSolanaPay={true}
             onClose={() => setShowLimitPopup(false)}
+            handleAmount={handleAmount}
             actions={<button onClick={handlePay}>Pay</button>}
         />
     </div>
