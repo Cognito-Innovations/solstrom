@@ -24,6 +24,7 @@ class ProjectAgent:
                 limit=self.prompt_config['rag_settings'].get('search_depth', 5),
                 threshold=self.prompt_config['rag_settings'].get('relevance_threshold', 0.6)
             )
+            print(f"Query Response: {query_response}")
 
             expanded_contexts = []
             available_sources = set()
@@ -54,6 +55,7 @@ class ProjectAgent:
                         ]
                     )
                 )
+                print(f"Doc Chunks: {doc_chunks}")
 
                 for chunk in doc_chunks:
                     if 'metadata' not in chunk:
@@ -75,12 +77,14 @@ class ProjectAgent:
                 expanded_contexts = format_context_texts(query_response)
 
             available_sources = [json.loads(s) for s in available_sources]
+            print(f"Available Sources: {available_sources}")
             
             formatted_user_message = self.prompt_config['user_message_template'].format(
                 user_message=user_message,
                 context="\n".join(expanded_contexts),
                 available_sources=json.dumps(available_sources)
             )
+            print(f"Formatted User Message: {formatted_user_message}")
             
             try:
                 result: ProjectResponse = await ClaudeAIClient.generate(
@@ -91,6 +95,7 @@ class ProjectAgent:
                     max_tokens=self.prompt_config['parameters'].get('max_tokens', 1500),
                     top_p=self.prompt_config['parameters'].get('top_p', 0.95)
                 )
+                print(f"Result: {result}")
             except Exception as e:
                 print(f"Failed to validate response: {str(e)}")
                 result = ProjectResponse(
